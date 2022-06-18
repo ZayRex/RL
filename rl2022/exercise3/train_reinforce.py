@@ -10,15 +10,15 @@ from rl2022.exercise3.agents import Reinforce
 RENDER = False # FALSE FOR FASTER TRAINING / TRUE TO VISUALIZE ENVIRONMENT DURING EVALUATION
 
 CARTPOLE_CONFIG = {
-    "eval_freq": 10000,
-    "eval_episodes": 20,
-    "hidden_size": (16, 16),
-    "learning_rate": 1e-2,
+    "eval_freq": 20000, #10000
+    "eval_episodes": 50, #20
+    "hidden_size": (50, 50), #16, 16
+    "learning_rate": 1e-3, #1e-2
 }
 CARTPOLE_CONFIG.update(CARTPOLE_CONSTANTS)
 
 CONFIG = CARTPOLE_CONFIG
-# CONFIG = LUNARLANDER_CONFIG
+#CONFIG = LUNARLANDER_CONFIG
 
 
 def play_episode(

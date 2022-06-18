@@ -6,9 +6,9 @@ from rl2022.exercise2.utils import evaluate
 from tqdm import tqdm
 
 CONFIG = {
-    "eval_episodes": 500,
-    "eval_freq": 5000,
-    "epsilon": 0.0,
+    "eval_episodes": 1000, #default 500
+    "eval_freq": 2000, #default 5000
+    "epsilon": 0.5,
 }
 CONFIG.update(CONSTANTS)
 

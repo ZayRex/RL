@@ -83,8 +83,17 @@ class ValueIteration(MDPSolver):
             E.g. V[3] returns the computed value for state 3
         """
         V = np.zeros(self.state_dim)
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q1")
+        while True:
+            delta = 0
+            for state in range(self.state_dim):
+                v = V[state]
+                curr_values = np.zeros(self.action_dim)
+                for action in range(self.action_dim):
+                    curr_values[action] = np.sum([self.mdp.P[state, action, next_state]*(self.mdp.R[state, action, next_state] + self.gamma*V[next_state]) for next_state in range(self.state_dim)])
+                V[state] = max(curr_values)
+                delta = max(delta, np.abs(v-V[state]))
+            if delta < theta: 
+                break
         return V
         
     def _calc_policy(self, V: np.ndarray) -> np.ndarray:
@@ -105,8 +114,11 @@ class ValueIteration(MDPSolver):
             policy[S, OTHER_ACTIONS] = 0
         """
         policy = np.zeros([self.state_dim, self.action_dim])
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q1")
+        for state in range(self.state_dim):
+            curr_values = np.zeros(self.action_dim)
+            for action in range(self.action_dim):
+                curr_values[action] = np.sum([self.mdp.P[state, action, next_state]*(self.mdp.R[state, action, next_state] + self.gamma*V[next_state]) for next_state in range(self.state_dim)])
+            policy[state, np.argmax(curr_values)] = 1
         return policy
 
     def solve(self, theta: float = 1e-6) -> Tuple[np.ndarray, np.ndarray]:
@@ -155,8 +167,15 @@ class PolicyIteration(MDPSolver):
             It is indexed as (State) where V[State] is the value of state 'State'
         """
         V = np.zeros(self.state_dim)
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q1")
+        while True:
+            delta = 0
+            for state in range(self.state_dim):
+                v = V[state]
+                action = np.argmax(policy[state,:])
+                V[state] = np.sum([self.mdp.P[state, action, next_state]*(self.mdp.R[state, action, next_state] + self.gamma*V[next_state]) for next_state in range(self.state_dim)])
+                delta = max(delta, np.abs(v-V[state]))
+            if delta < solver.theta:
+                break
         return np.array(V)
         
     def _policy_improvement(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -180,8 +199,22 @@ class PolicyIteration(MDPSolver):
         """
         policy = np.zeros([self.state_dim, self.action_dim])
         V = np.zeros([self.state_dim])
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q1")
+        while True:
+            p_stable = True
+            for state in range(self.state_dim):
+                curr_action = np.argmax(policy[state,:])
+                values = np.zeros(self.action_dim)
+                for action in range(self.action_dim):
+                    values[action] = np.sum([self.mdp.P[state, action, next_state]*(self.mdp.R[state, action, next_state] +
+                    self.gamma*V[next_state]) for next_state in range(self.state_dim)])
+                policy[state,:] = 0
+                policy[state,np.argmax(values)] = 1
+                if curr_action != np.argmax(policy[state,:]):
+                    p_stable = False
+            if p_stable:
+                break
+            else: 
+                V = self._policy_eval(policy)
         return policy, V
 
     def solve(self, theta: float = 1e-6) -> Tuple[np.ndarray, np.ndarray]:

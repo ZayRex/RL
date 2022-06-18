@@ -53,10 +53,17 @@ class Agent(ABC):
         :param obs (int): received observation representing the current environmental state
         :return (int): index of selected action
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
-        ### RETURN AN ACTION HERE ###
-        return -1
+        r = random.random()
+        
+        if r <= self.epsilon:
+            selected_action = random.randint(0, self.n_acts-1) #select random action
+        else:
+            action_values = [self.q_table[(obs, action)] for action in range(self.n_acts)]
+            max_value = max(action_values)
+            #select random action with maximum value
+            selected_action = random.choice([i for i, action_value in enumerate(action_values) if max_value == action_value])
+        return selected_action
+
 
     @abstractmethod
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -108,8 +115,8 @@ class QLearningAgent(Agent):
         :param done (bool): flag indicating whether a terminal state has been reached
         :return (float): updated Q-value for current observation-action pair
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        best_q_val = 0 if done else max([self.q_table[n_obs, action] for action in range(self.n_acts)])
+        self.q_table[obs, action] = self.q_table[obs, action] + self.alpha * (reward + self.gamma * best_q_val - self.q_table[obs, action])
         return self.q_table[(obs, action)]
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -123,8 +130,8 @@ class QLearningAgent(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        decay, max_deduct = 0.05, 0.50
+        self.epsilon = 1.0-(min(1.0, timestep / (decay * max_timestep)))*max_deduct
 
 
 class MonteCarloAgent(Agent):
@@ -162,8 +169,20 @@ class MonteCarloAgent(Agent):
             indexed by the state action pair.
         """
         updated_values = {}
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        state_action_pairs = list(zip(obses, actions))
+        g = 0 
+
+        for i in range(len(obses) - 1, -1, -1):
+            g = self.gamma * g + rewards[i]
+
+            if state_action_pairs[i] not in self.sa_counts:
+                self.sa_counts[state_action_pairs[i]] = 1
+            else:
+                 self.sa_counts[state_action_pairs[i]] += 1
+
+            if state_action_pairs[i] not in state_action_pairs[:i]:
+                updated_values[state_action_pairs[i]] = g 
+                self.q_table[state_action_pairs[i]] = (self.q_table[state_action_pairs[i]] * (self.sa_counts[state_action_pairs[i]] -1) +g)/self.sa_counts[state_action_pairs[i]]
         return updated_values
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -177,5 +196,5 @@ class MonteCarloAgent(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        decay, max_deduct = 0.05, 0.55
+        self.epsilon = 1.0-(min(1.0, timestep / (decay * max_timestep)))*max_deduct

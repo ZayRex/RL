@@ -26,13 +26,13 @@ PENDULUM_CONFIG = {
 PENDULUM_CONFIG.update(PENDULUM_CONSTANTS)
 
 BIPEDAL_CONFIG = {
-    "eval_freq": 20000,
-    "eval_episodes": 3,
-    "policy_learning_rate": 1e-2,
-    "critic_learning_rate": 1e-2,
-    "critic_hidden_size": [32, 32],
-    "policy_hidden_size": [32, 32],
-    "tau": 0.05,
+    "eval_freq": 10000,
+    "eval_episodes": 20,
+    "policy_learning_rate": 1e-4,
+    "critic_learning_rate": 1e-3,
+    "critic_hidden_size": [500, 400],
+    "policy_hidden_size": [400, 500],
+    "tau": 0.01,
     "batch_size": 32,
     "buffer_capacity": int(1e6),
 }

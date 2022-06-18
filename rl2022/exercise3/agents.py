@@ -171,8 +171,8 @@ class DQN(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        decay, max_deduct = 0.07, 0.95
+        self.epsilon = 1.0 - (min(1.0, timestep / (decay * max_timestep))) * max_deduct
 
     def act(self, obs: np.ndarray, explore: bool):
         """Returns an action (should be called at every timestep)
@@ -187,8 +187,10 @@ class DQN(Agent):
         :param explore (bool): flag indicating whether we should explore
         :return (sample from self.action_space): action the agent should perform
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        state = torch.from_numpy(np.array([obs])).float()
+        q_state = self.critics_net(state).detach().numpy()
+        selected_action = np.random.choice(q_state.size) if np.random.random() < self.epsilon and explore else np.argmax(q_state)
+        return selected_action
 
     def update(self, batch: Transition) -> Dict[str, float]:
         """Update function for DQN
@@ -202,9 +204,20 @@ class DQN(Agent):
         :param batch (Transition): batch vector from replay buffer
         :return (Dict[str, float]): dictionary mapping from loss names to loss values
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
-        q_loss = 0.0
+        p_loss = 0.0
+        states, actions, next_states, rewards, done = batch
+        q = self.critics_net(states).gather(dim=1, index=actions.long())
+        next_q_state = torch.max(self.critics_target.forward(next_states) ,1).values.unsqueeze(axis=1)
+        y = rewards +  next_q_state * self.gamma * (1 - done) 
+        criterion = torch.nn.MSELoss()
+        self.critics_optim.zero_grad()
+        loss = criterion(y, q)
+        loss.backward()
+        q_loss = loss.detach().numpy()
+        self.critics_optim.step()
+        self.update_counter += 1
+        if self.update_counter % self.target_update_freq == 0:
+            self.critics_target.hard_update(self.critics_net)
         return {"q_loss": q_loss}
 
 
@@ -278,8 +291,7 @@ class Reinforce(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        self.epsilon =  (1 - (timestep/ max_timesteps)) * 0.5
 
     def act(self, obs: np.ndarray, explore: bool):
         """Returns an action (should be called at every timestep)
@@ -293,8 +305,11 @@ class Reinforce(Agent):
         :param explore (bool): flag indicating whether we should explore
         :return (sample from self.action_space): action the agent should perform
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        state = torch.from_numpy(np.array([obs])).float()
+        probs = self.policy.forward(state)
+        m = Categorical(probs)
+        action = m.sample().item()
+        return action
 
     def update(
         self, rewards: List[float], observations: List[np.ndarray], actions: List[int],
@@ -309,7 +324,17 @@ class Reinforce(Agent):
         :return (Dict[str, float]): dictionary mapping from loss names to loss values
             losses
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
         p_loss = 0.0
+        g = 0
+        for i in range(len(rewards)-1, -1, -1):
+            g = rewards[i] + self.gamma *g
+            state = torch.from_numpy(np.array(observations[i])).float()
+            probs = self.policy.forward(state)
+            p_loss -= g * torch.log(probs[actions[i]])
+
+        p_loss /= len(rewards)
+        self.policy_optim.zero_grad()
+        p_loss.backward()
+        self.policy_optim.step()
+        p_loss = p_loss.item()
         return {"p_loss": p_loss}

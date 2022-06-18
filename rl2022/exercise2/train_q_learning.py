@@ -6,7 +6,7 @@ from rl2022.exercise2.agents import QLearningAgent
 from rl2022.exercise2.utils import evaluate
 
 CONFIG = {
-    "eval_episodes": 500,
+    "eval_episodes": 10000,
     "eval_freq": 1000,
     "alpha": 0.5,
     "epsilon": 0.0,

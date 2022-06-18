@@ -98,10 +98,22 @@ class IndependentQLearningAgents(MultiAgent):
 
         :return (List[int]): index of selected action for each agent
         """
-        actions = []
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
-        return actions
+        selected_actions = []
+        for i in range(self.num_agents):
+            actions = self.n_acts[i]
+            q_table = self.q_tables[i]
+            r = random.random()
+        
+            if r <= self.epsilon:
+                selected_action = random.randint(0, actions-1) #select random action
+            else:
+                action_values = [q_table[action] for action in range(actions)]
+                max_value = max(action_values)
+                #select random action with maximum value
+                selected_action = random.choice([i for i, action_value in enumerate(action_values) if max_value == action_value])
+            #add selected action to list of selected actions
+            selected_actions.append(selected_action)
+        return selected_actions
 
     def learn(
         self, actions: List[int], rewards: List[float], dones: List[bool]
@@ -116,8 +128,10 @@ class IndependentQLearningAgents(MultiAgent):
         :return (List[float]): updated Q-values for current actions of each agent
         """
         updated_values = []
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        for i in range(self.num_agents):
+            best_q_val = 0 if dones[i] else max([self.q_table[i][action] for action in range(self.n_acts[i])])
+            self.q_tables[i][actions[i]] = self.q_tables[i][actions[i]] + self.learning_rate * (rewards[i] + self.gamma * best_q_val - self.q_tables[i][actions[i]])
+            updated_values = self.q_tables[i][actions[i]]
         return updated_values
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -131,8 +145,8 @@ class IndependentQLearningAgents(MultiAgent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        decay, max_deduct = 0.15, 0.6
+        self.epsilon = 1.0(min(1.0, timestep/decay *max_timestep)) *max_deduct
 
 
 class JointActionLearning(MultiAgent):
@@ -176,8 +190,14 @@ class JointActionLearning(MultiAgent):
         :return (List[int]): index of selected action for each agent
         """
         joint_action = []
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        for i in range(self.num_agents):
+            if random.random() < self.epsilon:
+                selected_action = random.randint(0, self.n_acts[i] - 1)
+            else:
+                actions_evs = 0
+                max_ev = max(actions_evs)
+                selected_action = random.choice([i for i, action_ev in enumerate(actions_evs) if action_ev == max_ev])
+            joint_action.append(selected_action)
         return joint_action
 
     def learn(
@@ -193,8 +213,7 @@ class JointActionLearning(MultiAgent):
         :return (List[float]): updated Q-values for current observation-action pair of each agent
         """
         updated_values = []
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        
         return updated_values
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
